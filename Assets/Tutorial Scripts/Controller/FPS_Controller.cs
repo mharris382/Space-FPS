@@ -7,18 +7,23 @@ namespace SA
 	public class FPS_Controller : MonoBehaviour , IShootable
 	{
 		public bool isLocal = true;
+		bool aiming;
+		bool shooting;
 		new Rigidbody rigidbody;
 
 		public int hitTimes;
 
 		public float velocityDownSpeed = 1;
-		public float movementSpeed = 2;
+		public float normalMovementSpeed = 2;
+		public float aimSpeed = 2;
 		public float torqueSpeed = 2;
 		public float rotationSpeed = 2;
-
+		public float movementDownWeapon = -0.1f;
+		
 		float lookAngle = 0;
 		float tiltAngle = 0;
 		float pivotAngle = 0;
+		float moveAmount;
 
 		public bool isDead;
 
@@ -35,6 +40,7 @@ namespace SA
 		RuntimeWeapon weapon2;
 		public RuntimeWeapon currentWeapon;
 		float delta;
+		float fixedDelta;
 
 		Rigidbody[] ragdollRigidbodies;
 		Collider[] ragdollColliders;
@@ -90,13 +96,49 @@ namespace SA
 			}
 		}
 
+		private void FixedUpdate()
+		{
+			fixedDelta = Time.fixedDeltaTime;
+			if (isLocal)
+			{
+				HandeLocalController();
+				HandleADS(aiming);
+			}
+		}
+
 		private void Update()
 		{
 			delta = Time.deltaTime;
 
 			if (isLocal)
 			{
-				HandeLocalController();
+				aiming = Input.GetMouseButton(1);
+				shooting = Input.GetMouseButton(0);
+
+				HandleRecoil();
+				if (shooting)
+				{
+					bool isShoot = currentWeapon.Shoot();
+					if (isShoot)
+					{
+						recoilFlag = true;
+						HandleShooting(aiming);
+					}
+				}
+
+				HandleSpread();
+
+				if (Input.GetKeyDown(KeyCode.Alpha1))
+				{
+					if (weapon1 != null)
+						Equip(weapon1, 0);
+				}
+
+				if (Input.GetKeyDown(KeyCode.Alpha2))
+				{
+					if (weapon2 != null)
+						Equip(weapon2, 1);
+				}
 			}
 		}
 
@@ -122,63 +164,44 @@ namespace SA
 			float pivot = Input.GetAxis("Pivot");
 			float mouseX = Input.GetAxis("Mouse X");
 			float mouseY = Input.GetAxis("Mouse Y");
-			bool aiming = Input.GetMouseButton(1);
-			bool shooting = Input.GetMouseButton(0);
+
+			moveAmount = Mathf.Clamp01((Mathf.Abs(horizontal) + Mathf.Abs( vertical)));
 
 			//Handle move
 			Vector3 moveDirection = tiltTransform.forward * vertical;
 			moveDirection += tiltTransform.right * horizontal;
 			moveDirection += tiltTransform.up * upDown;
 
-			pivotAngle = (pivot * torqueSpeed) / delta;
-			tiltAngle = (mouseY * rotationSpeed) / delta;
-			lookAngle = (mouseX * rotationSpeed) / delta;
+			pivotAngle = (pivot * torqueSpeed) / fixedDelta;
+			tiltAngle = (mouseY * rotationSpeed) / fixedDelta;
+			lookAngle = (mouseX * rotationSpeed) / fixedDelta;
 
 			tiltTransform.Rotate(0, lookAngle, 0);
 			tiltTransform.Rotate(-tiltAngle, 0, 0);
-			tiltTransform.Rotate(0, 0, pivotAngle);
+			tiltTransform.Rotate(0, 0, -pivotAngle);
 
 			if (mouseX != 0 || mouseY != 0 || Vector3.Equals(Vector3.zero, moveDirection) == false)
 			{
 				currentSpread += .1f;
 			}
 
-			HandleRecoil();
-			HandleADS(aiming);
-			if (shooting)
-			{
-				bool isShoot = currentWeapon.Shoot();
-				if (isShoot)
-				{
-					recoilFlag = true;
-					HandleShooting(aiming);
-				}
-			}
-
-			HandleSpread();
 			Move(moveDirection);
-
-			if (Input.GetKeyDown(KeyCode.Alpha1))
-			{
-				if (weapon1 != null)
-					Equip(weapon1, 0);
-			}
-
-			if (Input.GetKeyDown(KeyCode.Alpha2))
-			{
-				if (weapon2 != null)
-					Equip(weapon2, 1);
-			}
 		}
 
 		void Move(Vector3 moveDirection)
 		{
-			rigidbody.AddForce(moveDirection * movementSpeed);
+			float actualSpeed = normalMovementSpeed;
+			if (aiming)
+				actualSpeed = aimSpeed;
 
+			rigidbody.AddForce(moveDirection * actualSpeed);
+	
 			Vector3 velocity = rigidbody.velocity;
-			Vector3 targetVelocity = Vector3.Lerp(velocity, Vector3.zero, Time.deltaTime * velocityDownSpeed);
+			Vector3 targetVelocity = Vector3.Lerp(velocity, Vector3.zero, fixedDelta * velocityDownSpeed);
 			rigidbody.velocity = targetVelocity;
 		}
+
+		public float lerpADSSpeed = 9;
 
 		void HandleADS(bool aiming)
 		{
@@ -190,9 +213,16 @@ namespace SA
 				tp = Vector3.zero;
 				fov = currentWeapon.fov_ads;
 			}
+			else
+			{
+				if (moveAmount > 0.1f)
+				{
+					tp.y += movementDownWeapon;
+				}
+			}
 
-			//	Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, delta / .1f);
-			Vector3 actualPos = tp;
+			Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, fixedDelta * lerpADSSpeed);
+			//Vector3 actualPos = tp;
 			currentWeapon.transform.localPosition = actualPos;
 
 			float fv = Mathf.Lerp(Camera.main.fieldOfView, fov, delta * 11);
@@ -300,6 +330,12 @@ namespace SA
 
 		void HandleRecoil()
 		{
+			if (currentWeapon == null)
+			{
+				Debug.Log("no current weapon");
+				return;
+			}
+
 			Quaternion targetRotation = Quaternion.identity;
 			float lerpSpeed = delta * recoilResetSpeed;
 
