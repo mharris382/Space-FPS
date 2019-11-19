@@ -19,7 +19,19 @@ namespace SA
 		public float torqueSpeed = 2;
 		public float rotationSpeed = 2;
 		public float movementDownWeapon = -0.1f;
-		
+		public float dashSpeed = 40;
+		public float dashResetTime = 2;
+		public GameObject dashParticles;
+
+		float dashTimer;
+		bool canDash;
+		bool weaponDownDash;
+		float weaponDownDashTimer;
+		public float maxWeaponDownDashTimer = .4f;
+		public float lerpADSSpeed = 18;
+		public float lerpADSAimingSpeed = 30;
+
+
 		float lookAngle = 0;
 		float tiltAngle = 0;
 		float pivotAngle = 0;
@@ -128,6 +140,26 @@ namespace SA
 
 				HandleSpread();
 
+				if (!canDash)
+				{
+					dashTimer += delta;
+					if (dashTimer > dashResetTime)
+					{
+						dashTimer = 0;
+						canDash = true;
+					}
+				}
+
+				if (weaponDownDash)
+				{
+					weaponDownDashTimer += delta;
+					if (weaponDownDashTimer > maxWeaponDownDashTimer)
+					{
+						weaponDownDashTimer = 0;
+						weaponDownDash = false;
+					}
+				}
+
 				if (Input.GetKeyDown(KeyCode.Alpha1))
 				{
 					if (weapon1 != null)
@@ -167,6 +199,8 @@ namespace SA
 
 			moveAmount = Mathf.Clamp01((Mathf.Abs(horizontal) + Mathf.Abs( vertical)));
 
+			
+
 			//Handle move
 			Vector3 moveDirection = tiltTransform.forward * vertical;
 			moveDirection += tiltTransform.right * horizontal;
@@ -186,6 +220,25 @@ namespace SA
 			}
 
 			Move(moveDirection);
+
+			if (Input.GetButtonDown("Jump"))
+			{
+				if (canDash)
+				{
+					if (moveAmount == 0)
+					{
+						moveDirection = tiltTransform.forward;
+					}
+
+					canDash = false;
+					weaponDownDash = true;
+					dashParticles.SetActive(false);
+					dashParticles.transform.rotation = Quaternion.LookRotation(-moveDirection);
+					dashParticles.SetActive(true);
+					FxManager.singleton.PlayDashFx();
+					rigidbody.AddForce(moveDirection * dashSpeed, ForceMode.Impulse);
+				}
+			}
 		}
 
 		void Move(Vector3 moveDirection)
@@ -201,17 +254,18 @@ namespace SA
 			rigidbody.velocity = targetVelocity;
 		}
 
-		public float lerpADSSpeed = 9;
 
 		void HandleADS(bool aiming)
 		{
 			Vector3 tp = currentWeapon.def_pos;
 			float fov = fov_normal;
+			float adsSpeed = lerpADSSpeed;
 
 			if (aiming)
 			{
 				tp = Vector3.zero;
 				fov = currentWeapon.fov_ads;
+				adsSpeed = lerpADSAimingSpeed;
 			}
 			else
 			{
@@ -221,12 +275,22 @@ namespace SA
 				}
 			}
 
-			Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, fixedDelta * lerpADSSpeed);
-			//Vector3 actualPos = tp;
-			currentWeapon.transform.localPosition = actualPos;
+			if (weaponDownDash)
+			{
+				tp.y = -1;
+				currentWeapon.transform.localPosition = tp;
+				fov = fov_normal;
+			}
+			else
+			{
+				Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, fixedDelta * adsSpeed);
+				//Vector3 actualPos = tp;
+				currentWeapon.transform.localPosition = actualPos;
+			}
 
 			float fv = Mathf.Lerp(Camera.main.fieldOfView, fov, delta * 11);
 			Camera.main.fieldOfView = fv;
+
 		}
 
 		void Equip(RuntimeWeapon weapon, int pos)

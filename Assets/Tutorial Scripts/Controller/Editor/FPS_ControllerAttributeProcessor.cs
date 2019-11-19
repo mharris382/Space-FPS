@@ -14,7 +14,10 @@ namespace SA
             "velocityDownSpeed",
             "movementSpeed",
             "torqueSpeed",
-            "rotationSpeed"
+            "rotationSpeed",
+            "movementDownWeapon",
+            "aimSpeed",
+            "normalMovementSpeed"
         };
         static string[] dependencies = new string[]
         {

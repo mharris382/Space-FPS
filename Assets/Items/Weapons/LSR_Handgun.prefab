@@ -45,6 +45,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   def_pos: {x: 0.174, y: -0.148, z: 0.201}
+--- !u!64 &5562647232871387519
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3944989571936509204}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 0
+  m_CookingOptions: 14
+  m_Mesh: {fileID: -2432090755550338912, guid: 1c8d966891785074cbed82d7c0ab987d, type: 3}
 --- !u!1001 &602962762728422951
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -201,6 +215,12 @@ PrefabInstance:
 --- !u!4 &5830042116076292762 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -4216859302048453862, guid: 1c8d966891785074cbed82d7c0ab987d,
+    type: 3}
+  m_PrefabInstance: {fileID: 1554529830099411328}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3944989571936509204 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2534866581884222612, guid: 1c8d966891785074cbed82d7c0ab987d,
     type: 3}
   m_PrefabInstance: {fileID: 1554529830099411328}
   m_PrefabAsset: {fileID: 0}
