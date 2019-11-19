@@ -1,23 +1,26 @@
-﻿using System;
-using System.Collections;
-using System.Linq;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SA
 {
-    public class FPS_Controller : MonoBehaviour
+	public class FPS_Controller : MonoBehaviour , IShootable
 	{
 		public bool isLocal = true;
 		new Rigidbody rigidbody;
 
-		public float velocityDownSpeed  = 1;
-		public float movementSpeed      = 2;
-		public float torqueSpeed        = 2;
-		public float rotationSpeed      = 2;
+		public int hitTimes;
+
+		public float velocityDownSpeed = 1;
+		public float movementSpeed = 2;
+		public float torqueSpeed = 2;
+		public float rotationSpeed = 2;
 
 		float lookAngle = 0;
 		float tiltAngle = 0;
 		float pivotAngle = 0;
+
+		public bool isDead;
 
 		public float fov_normal = 40;
 
@@ -30,8 +33,12 @@ namespace SA
 		public string secondaryWeapon = "Revolver";
 		RuntimeWeapon weapon1;
 		RuntimeWeapon weapon2;
-		RuntimeWeapon currentWeapon;
+		public RuntimeWeapon currentWeapon;
 		float delta;
+
+		Rigidbody[] ragdollRigidbodies;
+		Collider[] ragdollColliders;
+		Animator animator;
 
 		private void Start()
 		{
@@ -54,8 +61,33 @@ namespace SA
 			else
 			{
 				//TODO: setup client references
+				animator = GetComponentInChildren<Animator>();
+				ragdollColliders = animator.transform.GetComponentsInChildren<Collider>();
+				ragdollRigidbodies = animator.transform.GetComponentsInChildren<Rigidbody>();
+				DisableRagdoll();
 			}
 
+		}
+
+		void EnableRagdoll()
+		{
+			for (int i = 0; i < ragdollRigidbodies.Length; i++)
+			{
+				ragdollRigidbodies[i].isKinematic = false;
+				ragdollColliders[i].isTrigger = false;
+			}
+			animator.transform.parent = null;
+			animator.enabled = false;
+		}
+
+		void DisableRagdoll()
+		{
+			for (int i = 0; i < ragdollRigidbodies.Length; i++)
+			{
+				ragdollRigidbodies[i].isKinematic = true;
+				ragdollColliders[i].isTrigger = true;
+				ragdollRigidbodies[i].useGravity = false;
+			}
 		}
 
 		private void Update()
@@ -97,7 +129,6 @@ namespace SA
 			Vector3 moveDirection = tiltTransform.forward * vertical;
 			moveDirection += tiltTransform.right * horizontal;
 			moveDirection += tiltTransform.up * upDown;
-			Move(moveDirection);
 
 			pivotAngle = (pivot * torqueSpeed) / delta;
 			tiltAngle = (mouseY * rotationSpeed) / delta;
@@ -125,6 +156,7 @@ namespace SA
 			}
 
 			HandleSpread();
+			Move(moveDirection);
 
 			if (Input.GetKeyDown(KeyCode.Alpha1))
 			{
@@ -159,7 +191,8 @@ namespace SA
 				fov = currentWeapon.fov_ads;
 			}
 
-			Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, delta * 9);
+			//	Vector3 actualPos = Vector3.Lerp(currentWeapon.transform.localPosition, tp, delta / .1f);
+			Vector3 actualPos = tp;
 			currentWeapon.transform.localPosition = actualPos;
 
 			float fv = Mathf.Lerp(Camera.main.fieldOfView, fov, delta * 11);
@@ -225,12 +258,18 @@ namespace SA
 				actualSpread *= .02f;
 			}
 
-			Vector3 randPos = UnityEngine.Random.insideUnitCircle * currentSpread;
+			Vector3 randPos = Random.insideUnitCircle * currentSpread;
 			Vector3 shootOrigin = gunParent.position + gunParent.TransformDirection(randPos);
 			Ray ray = new Ray(shootOrigin, gunParent.forward);
 
 			if (Physics.Raycast(ray, out hit, 100))
 			{
+				IShootable shootable = hit.transform.GetComponent<IShootable>();
+				if (shootable != null)
+				{
+					shootable.OnHit(hit.point, gunParent.forward);
+				}
+
 				impactFx.SetActive(false);
 				impactFx.transform.position = hit.point;
 				impactFx.transform.LookAt(shootOrigin);
@@ -283,7 +322,26 @@ namespace SA
 
 			gunParent.localRotation = Quaternion.Slerp(gunParent.localRotation, targetRotation, lerpSpeed);
 		}
-
 		#endregion
+
+		public void OnHit(Vector3 hitPosition, Vector3 hitDirection)
+		{
+			if (!isDead)
+			{
+				hitTimes++;
+				if (hitTimes > 0)
+				{
+					isDead = true;
+					EnableRagdoll();
+					this.enabled = false;
+
+					if (currentWeapon != null)
+					{
+						currentWeapon.OnDrop();
+					}
+				}
+			}
+		}
+
 	}
 }

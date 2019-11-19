@@ -23,8 +23,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4602550747028191262}
-  m_LocalRotation: {x: 0.0059911455, y: 0.9663096, z: 0.022586266, w: -0.25631955}
-  m_LocalPosition: {x: 20.8058, y: 2.02359, z: -8.5}
+  m_LocalRotation: {x: -0.0198396, y: -0.2868929, z: -0.0059429975, w: 0.9577388}
+  m_LocalPosition: {x: 38.999992, y: 0.9944582, z: -24.254742}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 2207556009734004664}
@@ -38,10 +38,6 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 7600921042616499178}
     m_Modifications:
-    - target: {fileID: 100002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
-      propertyPath: m_Name
-      value: WFX_BImpact Metal
-      objectReference: {fileID: 0}
     - target: {fileID: 400002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -85,6 +81,10 @@ PrefabInstance:
     - target: {fileID: 400002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 100002, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}
+      propertyPath: m_Name
+      value: WFX_BImpact Metal
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 00fedc70b62a31e448e8ccc298257b56, type: 3}

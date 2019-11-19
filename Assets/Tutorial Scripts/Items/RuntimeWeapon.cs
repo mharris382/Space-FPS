@@ -10,10 +10,29 @@ namespace SA
 		ParticleSystem[] particles;
 		public float fov_ads { get { return baseWeapon.fov_ads; } }
 
+		new Rigidbody rigidbody;
+		new Collider collider;
+
+		public void OnDrop()
+		{
+			if (rigidbody == null)
+			{
+				rigidbody = GetComponent<Rigidbody>();
+				collider = GetComponentInChildren<Collider>();
+			}
+
+			transform.parent = null;
+			rigidbody.isKinematic = false;
+			collider.enabled = true;
+		}
+
 		public void Init(Weapon w)
 		{
 			baseWeapon = w;
 			particles = GetComponentsInChildren<ParticleSystem>();
+			rigidbody = GetComponent<Rigidbody>();
+			collider = GetComponentInChildren<Collider>();
+			collider.enabled = false;
 		}
 
 		int _magazineAmmo;
