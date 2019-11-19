@@ -34,3 +34,15 @@ sysinfo.txt
 # Builds
 *.apk
 *.unitypackage
+
+Assets/Standard Assets/*
+Assets/Standard Assets.meta
+
+Assets/Plugins/*
+Assets/Plugins.meta
+
+Assets/Models/*
+Assets/Models.meta
+
+Assets/VFX/*
+Assets/VFX.meta
